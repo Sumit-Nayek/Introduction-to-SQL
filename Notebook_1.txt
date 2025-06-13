@@ -1,0 +1,10 @@
+# Query 1: Selecting all columns from a table
+SELECT * FROM books;
+# Query 2: Filtering rows with WHERE clause
+Q.Find all books priced less than $20 to offer a discount on affordable books.
+Answer:
+SELECT title, price 
+FROM books 
+WHERE price < 20;
+# Query 3: Joining tables to combine data
+Q. List all books along with their authors' names to create a catalog with author information.
