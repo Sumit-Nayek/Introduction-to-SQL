@@ -8,3 +8,35 @@ FROM books
 WHERE price < 20;
 # Query 3: Joining tables to combine data
 Q. List all books along with their authors' names to create a catalog with author information.
+
+# Query 4: Aggregating data with GROUP BY
+Q. Calculate the total quantity of books sold for each book to analyze sales performance.
+SELECT b.title, SUM(s.quantity) as total_sold 
+FROM books b 
+JOIN sales s ON b.book_id = s.book_id 
+GROUP BY b.title;
+
+# Query 5: Sorting results with ORDER BY
+Q. List all books sorted by price in descending order to identify the most expensive books.
+SELECT title, price 
+FROM books 
+ORDER BY price DESC;
+
+# Query 6: Combining conditions with AND/OR
+Q. Find books published after 2015 by authors from a specific nationality (e.g., American) to curate a modern collection.
+SELECT b.title, b.publication_year, a.author_name 
+FROM books b 
+JOIN authors a ON b.author_id = a.author_id 
+WHERE b.publication_year > 2015 AND a.nationality = 'American';
+
+# Query 7: Using DISTINCT to avoid duplicates
+Q. Retrieve a list of unique author nationalities in the database to understand the diversity of authors.
+SELECT DISTINCT nationality 
+FROM authors;
+
+# Query 8: Limiting results with LIMIT
+Q. Display the top 5 most expensive books to feature in a premium books section.
+SELECT title, price 
+FROM books 
+ORDER BY price DESC 
+LIMIT 5;
