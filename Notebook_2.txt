@@ -35,3 +35,27 @@ FROM books b
 JOIN sales s ON b.book_id = s.book_id
 WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 GROUP BY b.title;
+
+# Query 6: Using a Subquery in the SELECT clause
+Q6. For each book, show its price and the percentage it contributes to the total book inventory value.
+SELECT title, price,
+       (price / (SELECT SUM(price) FROM books) * 100) AS percentage_of_total_value
+FROM books;
+
+# Query 7: Combining Multiple JOINs
+Q7. Retrieve sales details including book titles and author names for a comprehensive sales report.
+SELECT s.sale_id, b.title, a.author_name, s.quantity, s.sale_date
+FROM sales s
+JOIN books b ON s.book_id = b.book_id
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 8: Using EXISTS for correlated subqueries
+Q8. Find authors who have written books published after 2020 to promote new releases.
+SELECT a.author_name
+FROM authors a
+WHERE EXISTS (
+    SELECT 1
+    FROM books b
+    WHERE b.author_id = a.author_id
+    AND b.publication_year > 2020
+);
