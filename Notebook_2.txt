@@ -1,0 +1,37 @@
+# Query 1: Using a Subquery in the WHERE clause
+Q1. Find books priced higher than the average book price to identify premium-priced books.
+SELECT title, price
+FROM books
+WHERE price > (SELECT AVG(price) FROM books);
+
+# Query 2: Using CASE for conditional logic
+Q2. Categorize books into price tiers (Budget, Standard, Premium) based on their price for marketing purposes.
+SELECT title, price,
+       CASE 
+           WHEN price < 15 THEN 'Budget'
+           WHEN price BETWEEN 15 AND 30 THEN 'Standard'
+           ELSE 'Premium'
+       END AS price_tier
+FROM books;
+
+# Query 3: Using LEFT JOIN to include all records
+Q3. List all authors and any books they’ve written, including authors without books, to identify unpublished authors.
+SELECT a.author_name, b.title
+FROM authors a
+LEFT JOIN books b ON a.author_id = b.author_id;
+
+# Query 4: Using HAVING with GROUP BY
+Q4. Find books that have sold more than 100 units in total to highlight bestsellers.
+SELECT b.title, SUM(s.quantity) AS total_sold
+FROM books b
+JOIN sales s ON b.book_id = s.book_id
+GROUP BY b.title
+HAVING SUM(s.quantity) > 100;
+
+# Query 5: Using Date Functions
+Q5. Find total sales for each book in the last 30 days to analyze recent performance.
+SELECT b.title, SUM(s.quantity) AS recent_sales
+FROM books b
+JOIN sales s ON b.book_id = s.book_id
+WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+GROUP BY b.title;
