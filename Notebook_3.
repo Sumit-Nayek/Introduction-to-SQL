@@ -1,0 +1,57 @@
+
+# Query 1 : Selecting specific columns
+# Problem Statement: Retrieve only the title and publication year of all books to create a simplified catalog.
+
+SELECT title, publication_year
+FROM books;
+
+# Query 2 : Filtering with WHERE
+# Problem Statement: Find all books published after 2010 to focus on modern titles for a promotional campaign.
+
+SELECT title, publication_year
+FROM books
+WHERE publication_year > 2010;
+
+# Query 3 : INNER JOIN 
+# Problem Statement: List book titles and their corresponding author names to display authorship in a report.
+
+SELECT b.title, a.author_name
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 4 : Aggregating with COUNT and GROUP BY
+# Problem Statement: Count the number of books per author to identify prolific authors.
+ 
+SELECT a.author_name, COUNT(b.book_id) AS book_count
+FROM authors a
+JOIN books b ON a.author_id = b.author_id
+GROUP BY a.author_name;
+
+# Query 5 : Sorting with ORDER BY
+# Problem Statement: List all books sorted by publication year (newest first) to highlight recent publications.
+
+SELECT title, publication_year
+FROM books
+ORDER BY publication_year DESC;
+
+# Query 6 : Filtering with BETWEEN
+# Problem Statement: Find books priced between $10 and $25 to create a mid-range book promotion.
+
+SELECT title, price
+FROM books
+WHERE price BETWEEN 10 AND 25;
+
+# Query 7 : Pattern matching with LIKE
+# Problem Statement: Find authors whose names start with 'J' to create a themed author showcase.
+
+SELECT author_name
+FROM authors
+WHERE author_name LIKE 'J%';
+
+# Query 8 : Limiting with LIMIT
+# Problem Statement: Display the three cheapest books to feature in a budget-friendly book section.
+
+SELECT title, price
+FROM books
+ORDER BY price ASC
+LIMIT 3;
