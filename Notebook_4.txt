@@ -1,0 +1,74 @@
+# Query 1: Subquery in WHERE
+# Problem Statement: Identify books with prices above the average price of books published in the same year to highlight premium books per publication year.
+SELECT title, price, publication_year
+FROM books b
+WHERE price > (
+    SELECT AVG(price)
+    FROM books
+    WHERE publication_year = b.publication_year
+);
+
+# Query 2: CASE with GROUP BY
+# Problem Statement: Classify books as 'Low', 'Medium', or 'High' sales based on total units sold (Low: <50, Medium: 50-150, High: >150) for a sales report.
+SELECT b.title, SUM(s.quantity) AS total_sold,
+       CASE
+           WHEN SUM(s.quantity) < 50 THEN 'Low'
+           WHEN SUM(s.quantity) BETWEEN 50 AND 150 THEN 'Medium'
+           ELSE 'High'
+       END AS sales_category
+FROM books b
+JOIN sales s ON b.book_id = s.book_id
+GROUP BY b.title;
+
+# Query 3: LEFT JOIN with COALESCE
+# Problem Statement: List all books, including those without sales, and show their total sales quantity (display 0 for unsold books) to analyze inventory.
+SELECT b.title, COALESCE(SUM(s.quantity), 0) AS total_sold
+FROM books b
+LEFT JOIN sales s ON b.book_id = s.book_id
+GROUP BY b.title;
+
+# Query 4: HAVING with GROUP BY
+# Problem Statement: Find authors who have sold more than 200 total units across all their books to identify top-performing authors.
+SELECT a.author_name, SUM(s.quantity) AS total_sold
+FROM authors a
+JOIN books b ON a.author_id = b.author_id
+JOIN sales s ON b.book_id = s.book_id
+GROUP BY a.author_name
+HAVING SUM(s.quantity) > 200;
+
+# Query 5: Window Function (RANK)
+# Problem Statement: For each book, calculate its rank within its publication year based on price (highest price gets rank 1) to evaluate pricing trends.
+SELECT title, publication_year, price,
+       RANK() OVER (PARTITION BY publication_year ORDER BY price DESC) AS price_rank
+FROM books;
+
+# Query 6: Date Functions with JOIN
+# Problem Statement: Find books sold in the last 90 days and calculate their total revenue (price * quantity) for a quarterly sales review.
+SELECT b.title, SUM(s.quantity * b.price) AS total_revenue
+FROM books b
+JOIN sales s ON b.book_id = s.book_id
+WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+GROUP BY b.title;
+
+# Query 7: Subquery in SELECT
+# Problem Statement: For each author, show their most expensive book to highlight premium titles per author.
+SELECT a.author_name, (
+    SELECT b.title
+    FROM books b
+    WHERE b.author_id = a.author_id
+    ORDER BY b.price DESC
+    LIMIT 1
+) AS most_expensive_book
+FROM authors a;
+
+# Query 8: Window Function (NTILE)
+# Problem Statement: Identify books with sales in the top 10% of total sales quantities across all books to recognize bestsellers.
+SELECT title, total_sold
+FROM (
+    SELECT b.title, SUM(s.quantity) AS total_sold,
+           NTILE(10) OVER (ORDER BY SUM(s.quantity) DESC) AS sales_decile
+    FROM books b
+    JOIN sales s ON b.book_id = s.book_id
+    GROUP BY b.title
+) t
+WHERE sales_decile = 1;
