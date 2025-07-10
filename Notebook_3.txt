@@ -1,4 +1,4 @@
-
+## beginner level query ##
 # Query 1 : Selecting specific columns
 # Problem Statement: Retrieve only the title and publication year of all books to create a simplified catalog.
 
