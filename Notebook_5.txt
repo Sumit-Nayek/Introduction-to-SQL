@@ -1,0 +1,85 @@
+### Intermediate Level ###
+
+# Query 1: Correlated Subquery
+# Problem Statement: Find books where the price is higher than the average price of books by the same author to identify standout titles.
+SELECT title, price, author_id
+FROM books b
+WHERE price > (
+    SELECT AVG(price)
+    FROM books
+    WHERE author_id = b.author_id
+);
+
+# Query 2: CASE with Multiple Joins
+# Problem Statement: Categorize authors as 'Emerging' (less than 2 books) or 'Established' (2 or more books) and show their total sales to evaluate author impact.
+SELECT a.author_name, 
+       CASE 
+           WHEN COUNT(b.book_id) < 2 THEN 'Emerging'
+           ELSE 'Established'
+       END AS author_status,
+       COALESCE(SUM(s.quantity), 0) AS total_sold
+FROM authors a
+LEFT JOIN books b ON a.author_id = b.author_id
+LEFT JOIN sales s ON b.book_id = s.book_id
+GROUP BY a.author_name;
+
+# Query 3: LEFT JOIN with Filtering
+# Problem Statement: List all authors and their book count, including those without books, to assess author productivity.
+SELECT a.author_name, COUNT(b.book_id) AS book_count
+FROM authors a
+LEFT JOIN books b ON a.author_id = b.author_id
+GROUP BY a.author_name;
+
+# Query 4: HAVING with Date Filter
+# Problem Statement: Identify books with total sales exceeding 50 units in the current year to highlight top performers for an annual report.
+SELECT b.title, SUM(s.quantity) AS total_sold
+FROM books b
+JOIN sales s ON b.book_id = s.book_id
+WHERE YEAR(s.sale_date) = YEAR(CURDATE())
+GROUP BY b.title
+HAVING SUM(s.quantity) > 50;
+
+# Query 5: Window Function (ROW_NUMBER)
+# Problem Statement: Assign a unique row number to each book within its author’s collection, ordered by publication year (newest first), to track publication order.
+SELECT a.author_name, b.title, b.publication_year,
+       ROW_NUMBER() OVER (PARTITION BY b.author_id ORDER BY b.publication_year DESC) AS publication_order
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 6: Common Table Expression (CTE)
+# Problem Statement: Find the top 3 authors by total sales revenue (price * quantity) to feature in a marketing campaign.
+WITH AuthorRevenue AS (
+    SELECT a.author_name, SUM(s.quantity * b.price) AS total_revenue
+    FROM authors a
+    JOIN books b ON a.author_id = b.author_id
+    JOIN sales s ON b.book_id = s.book_id
+    GROUP BY a.author_name
+)
+SELECT author_name, total_revenue
+FROM AuthorRevenue
+ORDER BY total_revenue DESC
+LIMIT 3;
+
+# Query 7: Subquery in FROM
+# Problem Statement: Identify books with sales quantities above the average sales quantity for their publication year to analyze high-demand titles.
+SELECT t.title, t.total_sold, t.publication_year
+FROM (
+    SELECT b.title, b.publication_year, SUM(s.quantity) AS total_sold,
+           AVG(SUM(s.quantity)) OVER (PARTITION BY b.publication_year) AS avg_sales_year
+    FROM books b
+    JOIN sales s ON b.book_id = s.book_id
+    GROUP BY b.title, b.publication_year
+) t
+WHERE t.total_sold > t.avg_sales_year;
+
+# Query 8: EXISTS with Date Filter
+# Problem Statement: Find authors who have had sales in the last 30 days to invite for a promotional event.
+SELECT a.author_name
+FROM authors a
+WHERE EXISTS (
+    SELECT 1
+    FROM books b
+    JOIN sales s ON b.book_id = s.book_id
+    WHERE b.author_id = a.author_id
+    AND s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+);
