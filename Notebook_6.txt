@@ -1,0 +1,52 @@
+# Query 1: Selecting specific columns
+# Problem Statement: Retrieve the title and price of all books to create a price list for the bookstore.
+SELECT title, price
+FROM books;
+
+# Query 2: Filtering with WHERE
+# Problem Statement: Find all books published before 2000 to identify classic titles for a special collection.
+SELECT title, publication_year
+FROM books
+WHERE publication_year < 2000;
+
+# Query 3: INNER JOIN
+# Problem Statement: Display book titles and their authors' nationalities to analyze the diversity of the bookstore’s catalog.
+SELECT b.title, a.nationality
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 4: Aggregating with SUM and GROUP BY
+# Problem Statement: Calculate the total sales quantity for each book to assess inventory demand.
+SELECT b.title, SUM(s.quantity) AS total_sold
+FROM books b
+JOIN sales s ON b.book_id = s.book_id
+GROUP BY b.title;
+
+# Query 5: Sorting with ORDER BY
+# Problem Statement: List all authors alphabetically by name to create an organized author directory.
+SELECT author_name
+FROM authors
+ORDER BY author_name ASC;
+
+# Query 6: Filtering with IN
+# Problem Statement: Find books by authors from specific countries (e.g., Canada or UK) for an international book fair.
+SELECT title, author_id
+FROM books
+WHERE author_id IN (
+    SELECT author_id
+    FROM authors
+    WHERE nationality IN ('Canada', 'UK')
+);
+
+# Query 7: Pattern matching with LIKE
+# Problem Statement: Identify book titles containing the word 'Adventure' to curate an adventure-themed reading list.
+SELECT title
+FROM books
+WHERE title LIKE '%Adventure%';
+
+# Query 8: Limiting with LIMIT
+# Problem Statement: Show the top 4 most recently published books to feature in a new releases section.
+SELECT title, publication_year
+FROM books
+ORDER BY publication_year DESC
+LIMIT 4;
