@@ -1,0 +1,86 @@
+### Easy Advanced Level ###
+
+# Query 1: Common Table Expression (CTE)
+# Problem Statement: Identify the top 5 books by total sales quantity and show their titles and authors for a bestseller list.
+WITH BookSales AS (
+    SELECT b.book_id, b.title, a.author_name, SUM(s.quantity) AS total_sold
+    FROM books b
+    JOIN authors a ON b.author_id = a.author_id
+    JOIN sales s ON b.book_id = s.book_id
+    GROUP BY b.book_id, b.title, a.author_name
+)
+SELECT title, author_name, total_sold
+FROM BookSales
+ORDER BY total_sold DESC
+LIMIT 5;
+
+# Query 2: Conditional Aggregation
+# Problem Statement: Calculate the total sales revenue for each book, but only for sales in the last 60 days, to assess recent performance.
+SELECT b.title, SUM(CASE 
+                       WHEN s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 60 DAY) 
+                       THEN s.quantity * b.price 
+                       ELSE 0 
+                   END) AS recent_revenue
+FROM books b
+LEFT JOIN sales s ON b.book_id = s.book_id
+GROUP BY b.title;
+
+# Query 3: Window Function (DENSE_RANK)
+# Problem Statement: Rank authors by the number of books they’ve published, with ties receiving the same rank, to identify prolific writers.
+SELECT a.author_name, COUNT(b.book_id) AS book_count,
+       DENSE_RANK() OVER (ORDER BY COUNT(b.book_id) DESC) AS author_rank
+FROM authors a
+LEFT JOIN books b ON a.author_id = b.author_id
+GROUP BY a.author_name;
+
+# Query 4: Self-Join
+# Problem Statement: Find pairs of books by the same author with prices within $5 of each other to suggest bundled promotions.
+SELECT b1.title AS book1, b2.title AS book2, b1.price AS price1, b2.price AS price2
+FROM books b1
+JOIN books b2 ON b1.author_id = b2.author_id AND b1.book_id < b2.book_id
+WHERE ABS(b1.price - b2.price) <= 5;
+
+# Query 5: Correlated Subquery with Aggregation
+# Problem Statement: List books that have sold more units than the average sales for books by the same author to highlight top performers.
+SELECT b.title, SUM(s.quantity) AS total_sold
+FROM books b
+JOIN sales s ON b.book_id = s.book_id
+GROUP BY b.title
+HAVING SUM(s.quantity) > (
+    SELECT AVG(total_qty)
+    FROM (
+        SELECT SUM(s2.quantity) AS total_qty
+        FROM books b2
+        JOIN sales s2 ON b2.book_id = s2.book_id
+        WHERE b2.author_id = b.author_id
+        GROUP BY b2.book_id
+    ) avg_sales
+);
+
+# Query 6: Multiple JOINs with Filtering
+# Problem Statement: Show book titles, author names, and total sales for books published after 2018 by non-American authors for an international showcase.
+SELECT b.title, a.author_name, COALESCE(SUM(s.quantity), 0) AS total_sold
+FROM books b
+JOIN authors a ON b.author_id = a.author_id
+LEFT JOIN sales s ON b.book_id = s.book_id
+WHERE b.publication_year > 2018 AND a.nationality != 'American'
+GROUP BY b.title, a.author_name;
+
+# Query 7: Window Function (LAG)
+# Problem Statement: For each book, show its price and the price of the previous book by the same author (ordered by publication year) to analyze pricing trends.
+SELECT b.title, b.price, b.publication_year, a.author_name,
+       LAG(b.price) OVER (PARTITION BY b.author_id ORDER BY b.publication_year) AS previous_book_price
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 8: EXISTS with Aggregation
+# Problem Statement: Find authors who have at least one book with no sales to identify titles needing marketing efforts.
+SELECT a.author_name
+FROM authors a
+WHERE EXISTS (
+    SELECT 1
+    FROM books b
+    LEFT JOIN sales s ON b.book_id = s.book_id
+    WHERE b.author_id = a.author_id
+    AND s.sale_id IS NULL
+);
