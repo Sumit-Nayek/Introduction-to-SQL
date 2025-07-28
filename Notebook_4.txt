@@ -1,4 +1,4 @@
-## intermediate level 
+### intermediate level ###
 # Query 1: Subquery in WHERE
 # Problem Statement: Identify books with prices above the average price of books published in the same year to highlight premium books per publication year.
 SELECT title, price, publication_year
