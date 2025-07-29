@@ -1,0 +1,81 @@
+### Easy Advanced Level ###
+
+# Query 1: Common Table Expression (CTE)
+# Problem Statement: Identify authors with total book sales revenue exceeding $1000 to feature in a premium author recognition program.
+WITH AuthorRevenue AS (
+    SELECT a.author_name, SUM(s.quantity * b.price) AS total_revenue
+    FROM authors a
+    JOIN books b ON a.author_id = b.author_id
+    JOIN sales s ON b.book_id = s.book_id
+    GROUP BY a.author_name
+)
+SELECT author_name, total_revenue
+FROM AuthorRevenue
+WHERE total_revenue > 1000
+ORDER BY total_revenue DESC;
+
+# Query 2: Conditional Aggregation
+# Problem Statement: Calculate the total sales quantity for each book, but only for sales made on weekends, to analyze weekend shopping trends.
+SELECT b.title, SUM(CASE 
+                       WHEN DAYOFWEEK(s.sale_date) IN (1, 7) 
+                       THEN s.quantity 
+                       ELSE 0 
+                   END) AS weekend_sales
+FROM books b
+LEFT JOIN sales s ON b.book_id = s.book_id
+GROUP BY b.title;
+
+# Query 3: Window Function (PARTITION BY)
+# Problem Statement: For each book, show its price as a percentage of the total price of all books by the same author to evaluate pricing distribution.
+SELECT b.title, a.author_name, b.price,
+       (b.price / SUM(b.price) OVER (PARTITION BY b.author_id) * 100) AS price_percentage
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 4: Self-Join
+# Problem Statement: Find pairs of books published in the same year by different authors to create a themed display for annual releases.
+SELECT b1.title AS book1, b2.title AS book2, b1.publication_year
+FROM books b1
+JOIN books b2 ON b1.publication_year = b2.publication_year AND b1.author_id != b2.author_id AND b1.book_id < b2.book_id;
+
+# Query 5: Correlated Subquery
+# Problem Statement: List books that have higher sales than the average sales of books published in the same year to identify high-demand titles.
+SELECT b.title, SUM(s.quantity) AS total_sold
+FROM books b
+JOIN sales s ON b.book_id = s.book_id
+GROUP BY b.title, b.publication_year
+HAVING SUM(s.quantity) > (
+    SELECT AVG(total_qty)
+    FROM (
+        SELECT SUM(s2.quantity) AS total_qty
+        FROM books b2
+        JOIN sales s2 ON b2.book_id = s2.book_id
+        WHERE b2.publication_year = b.publication_year
+        GROUP BY b2.book_id
+    ) avg_sales
+);
+
+# Query 6: Multiple JOINs with Aggregation
+# Problem Statement: Show the total number of books and total sales for each author’s nationality to analyze market reach by country.
+SELECT a.nationality, COUNT(DISTINCT b.book_id) AS book_count, COALESCE(SUM(s.quantity), 0) AS total_sold
+FROM authors a
+LEFT JOIN books b ON a.author_id = b.author_id
+LEFT JOIN sales s ON b.book_id = s.book_id
+GROUP BY a.nationality;
+
+# Query 7: Window Function (LEAD)
+# Problem Statement: For each book, show its title and the title of the next book by the same author (ordered by price) to analyze pricing sequences.
+SELECT b.title, a.author_name, b.price,
+       LEAD(b.title) OVER (PARTITION BY b.author_id ORDER BY b.price) AS next_book
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 8: NOT EXISTS
+# Problem Statement: Find books that have never been sold to prioritize for a clearance sale.
+SELECT b.title
+FROM books b
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.book_id = b.book_id
+)
