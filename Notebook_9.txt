@@ -1,0 +1,114 @@
+### Advanced Level SQL Queries ###
+# Query 1: Recursive CTE
+# Problem Statement: Generate a report showing the cumulative sales quantity for each book over the last 6 months, ordered by month, to track sales trends.
+WITH RECURSIVE DateRange AS (
+    SELECT DATE_SUB(CURDATE(), INTERVAL 6 MONTH) AS sale_month
+    UNION ALL
+    SELECT DATE_ADD(sale_month, INTERVAL 1 MONTH)
+    FROM DateRange
+    WHERE sale_month < CURDATE()
+),
+BookSales AS (
+    SELECT b.title, DATE_FORMAT(s.sale_date, '%Y-%m') AS sale_month, SUM(s.quantity) AS monthly_sales
+    FROM books b
+    JOIN sales s ON b.book_id = s.book_id
+    WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+    GROUP BY b.title, DATE_FORMAT(s.sale_date, '%Y-%m')
+)
+SELECT dr.sale_month, bs.title, COALESCE(SUM(bs.monthly_sales) OVER (PARTITION BY bs.title ORDER BY dr.sale_month), 0) AS cumulative_sales
+FROM DateRange dr
+CROSS JOIN books b
+LEFT JOIN BookSales bs ON b.title = bs.title AND dr.sale_month = bs.sale_month
+ORDER BY bs.title, dr.sale_month;
+
+# Query 2: Pivoting with Conditional Aggregation
+# Problem Statement: Create a pivot table showing total sales quantities for each book by quarter in the current year to analyze seasonal performance.
+SELECT b.title,
+       SUM(CASE WHEN QUARTER(s.sale_date) = 1 THEN s.quantity ELSE 0 END) AS Q1_sales,
+       SUM(CASE WHEN QUARTER(s.sale_date) = 2 THEN s.quantity ELSE 0 END) AS Q2_sales,
+       SUM(CASE WHEN QUARTER(s.sale_date) = 3 THEN s.quantity ELSE 0 END) AS Q3_sales,
+       SUM(CASE WHEN QUARTER(s.sale_date) = 4 THEN s.quantity ELSE 0 END) AS Q4_sales
+FROM books b
+LEFT JOIN sales s ON b.book_id = s.book_id
+WHERE YEAR(s.sale_date) = YEAR(CURDATE())
+GROUP BY b.title;
+
+# Query 3: Window Function (CUME_DIST)
+# Problem Statement: Calculate the cumulative distribution of book prices within each author’s portfolio to identify pricing positioning.
+SELECT a.author_name, b.title, b.price,
+       CUME_DIST() OVER (PARTITION BY b.author_id ORDER BY b.price) AS price_cumulative_distribution
+FROM books b
+JOIN authors a ON b.author_id = a.author_id
+ORDER BY a.author_name, b.price;
+
+# Query 4: Complex Self-Join
+# Problem Statement: Find books by the same author with publication years within 2 years of each other to suggest related reading collections.
+SELECT b1.title AS book1, b2.title AS book2, b1.publication_year AS year1, b2.publication_year AS year2
+FROM books b1
+JOIN books b2 ON b1.author_id = b2.author_id AND b1.book_id != b2.book_id
+WHERE ABS(b1.publication_year - b2.publication_year) <= 2
+AND b1.book_id < b2.book_id;
+
+# Query 5: Correlated Subquery with Ranking
+# Problem Statement: List authors whose highest-selling book accounts for more than 50% of their total sales to identify authors reliant on a single title.
+SELECT a.author_name, (
+    SELECT b.title
+    FROM books b
+    JOIN sales s ON b.book_id = s.book_id
+    WHERE b.author_id = a.author_id
+    GROUP BY b.title
+    ORDER BY SUM(s.quantity) DESC
+    LIMIT 1
+) AS top_book,
+SUM(s.quantity) AS total_sales
+FROM authors a
+JOIN books b ON a.author_id = b.author_id
+JOIN sales s ON b.book_id = s.book_id
+GROUP BY a.author_name
+HAVING (
+    SELECT SUM(s2.quantity)
+    FROM books b2
+    JOIN sales s2 ON b2.book_id = s2.book_id
+    WHERE b2.author_id = a.author_id
+    GROUP BY b2.title
+    ORDER BY SUM(s2.quantity) DESC
+    LIMIT 1
+) / SUM(s.quantity) > 0.5;
+
+# Query 6: Advanced JOIN with Date Filtering
+# Problem Statement: Identify authors who published books in the last 5 years but had no sales in the last 30 days to target for marketing campaigns.
+SELECT a.author_name, COUNT(b.book_id) AS recent_books
+FROM authors a
+JOIN books b ON a.author_id = b.author_id
+WHERE b.publication_year >= YEAR(CURDATE()) - 5
+AND NOT EXISTS (
+    SELECT 1
+    FROM sales s
+    JOIN books b2 ON s.book_id = b2.book_id
+    WHERE b2.author_id = a.author_id
+    AND s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+)
+GROUP BY a.author_name;
+
+# Query 7: Window Function (FIRST_VALUE)
+# Problem Statement: For each book, show its title and the title of the cheapest book by the same author to compare pricing strategies.
+SELECT b.title, a.author_name, b.price,
+       FIRST_VALUE(b.title) OVER (PARTITION BY b.author_id ORDER BY b.price) AS cheapest_book
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 8: Complex Aggregation with Subquery
+# Problem Statement: Find books with sales growth (percentage increase in sales from the previous month) exceeding 20% to highlight trending titles.
+WITH MonthlySales AS (
+    SELECT b.title, DATE_FORMAT(s.sale_date, '%Y-%m') AS sale_month, SUM(s.quantity) AS monthly_sales
+    FROM books b
+    JOIN sales s ON b.book_id = s.book_id
+    WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+    GROUP BY b.title, DATE_FORMAT(s.sale_date, '%Y-%m')
+)
+SELECT ms1.title, ms1.sale_month, ms1.monthly_sales,
+       ((ms1.monthly_sales - ms2.monthly_sales) / ms2.monthly_sales * 100) AS sales_growth
+FROM MonthlySales ms1
+JOIN MonthlySales ms2 ON ms1.title = ms2.title 
+AND ms1.sale_month = DATE_FORMAT(DATE_ADD(STR_TO_DATE(ms2.sale_month, '%Y-%m'), INTERVAL 1 MONTH), '%Y-%m')
+WHERE ((ms1.monthly_sales - ms2.monthly_sales) / ms2.monthly_sales * 100) > 20;
