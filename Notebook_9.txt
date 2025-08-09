@@ -1,4 +1,5 @@
-### Advanced Level SQL Queries ###
+### Advanced Level SQL Queries ### (second notebook)
+
 # Query 1: Recursive CTE
 # Problem Statement: Generate a report showing the cumulative sales quantity for each book over the last 6 months, ordered by month, to track sales trends.
 WITH RECURSIVE DateRange AS (
