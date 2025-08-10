@@ -1,5 +1,6 @@
 
 ### beginner level ###
+(practice 1)
 # Query 1: Selecting all columns from a table
 SELECT * FROM books;
 # Query 2: Filtering rows with WHERE clause
