@@ -1,4 +1,4 @@
-### Easy Advanced Level ###
+### Easy Advanced Level ### (First note book)
 
 # Query 1: Common Table Expression (CTE)
 # Problem Statement: Identify authors with total book sales revenue exceeding $1000 to feature in a premium author recognition program.
