@@ -1,0 +1,50 @@
+# Beginner Level Practical SQL Queries
+
+# Query 1: Selecting specific columns
+# Problem Statement: Retrieve the title and author name of all books to create a simple catalog for customers.
+SELECT b.title, a.author_name
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 2: Filtering with WHERE
+# Problem Statement: Find all books priced under $15 to offer in a budget book sale.
+SELECT title, price
+FROM books
+WHERE price < 15;
+
+# Query 3: INNER JOIN
+# Problem Statement: List book titles and their author’s nationality to prepare a display for an international book event.
+SELECT b.title, a.nationality
+FROM books b
+JOIN authors a ON b.author_id = a.author_id;
+
+# Query 4: Aggregating with COUNT and GROUP BY
+# Problem Statement: Count the number of books published each year to analyze publication trends.
+SELECT publication_year, COUNT(book_id) AS book_count
+FROM books
+GROUP BY publication_year;
+
+# Query 5: Sorting with ORDER BY
+# Problem Statement: List all books sorted by price from lowest to highest to create a budget-friendly recommendation list.
+SELECT title, price
+FROM books
+ORDER BY price ASC;
+
+# Query 6: Filtering with IN
+# Problem Statement: Find books published in specific years (2015, 2018, 2020) for a milestone anniversary promotion.
+SELECT title, publication_year
+FROM books
+WHERE publication_year IN (2015, 2018, 2020);
+
+# Query 7: Pattern matching with LIKE
+# Problem Statement: Identify books with titles containing 'Mystery' to create a mystery genre reading list.
+SELECT title
+FROM books
+WHERE title LIKE '%Mystery%';
+
+# Query 8: Limiting with LIMIT
+# Problem Statement: Display the 5 most expensive books to feature in a premium book section.
+SELECT title, price
+FROM books
+ORDER BY price DESC
+LIMIT 5;
