@@ -1,4 +1,5 @@
-### intermediate level ###
+### Intermediate level ###
+
 # Query 1: Using a Subquery in the WHERE clause
 Q1. Find books priced higher than the average book price to identify premium-priced books.
 SELECT title, price
