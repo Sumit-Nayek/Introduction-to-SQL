@@ -1,4 +1,5 @@
 ### Beginner level ###
+
 # Query 1: Selecting specific columns
 # Problem Statement: Retrieve the title and price of all books to create a price list for the bookstore.
 SELECT title, price
